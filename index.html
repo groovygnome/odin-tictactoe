@@ -2,11 +2,36 @@
 <html lang='en'>
     <head>
         <meta charset='UTF-8'>
-        <Title>Odin Tic Tac Toe</title>
+        <Title>Odin Tic Tac Toe</title>    
         <link rel='stylesheet' href='./styles.css'>
     </head>
 
     <body>
+        <button class='new-game'>New Game</button>
+        <dialog class='game-form'>
+            <form id='new-game'>
+                <button class='close'>&times;</button>
+                <fieldset class='player-one'>
+                    <legend>Player One</legend>
+                    <label for='p1name'>
+                        <input type='text' id='p1name' placeholder='Name' />
+                    </label>
+                    <label for='p1symbol'>
+                        <input type='text' id='p1symbol' placeholder='Play Symbol' pattern='[a-zA-Z]' />
+                    </label>
+                </fieldset>
+                <fieldset class='player-two'>
+                    <legend>Player Two</legend>
+                    <label for='p2name'>
+                        <input type='text' id='p2name' placeholder='Name' />
+                    </label>
+                    <label for='p2symbol'>
+                        <input type='text' id='p2symbol' placeholder='Play Symbol' pattern='[a-zA-Z]' />
+                    </label>
+                </fieldset>
+                <input class='submit' type='submit' form='new' value="Let's Play!">
+            </form>
+        </dialog>
         <div class='container'>
 
         </div>
