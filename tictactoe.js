@@ -14,6 +14,7 @@ function createTile(index) {
     const getSymbol = () => {
         return symbol;
     };
+    const claimed = () => (symbol != index);
     const claimTile = (newSymbol) => {
         if (symbol == index) {
             symbol = newSymbol;
@@ -21,7 +22,7 @@ function createTile(index) {
         }
     };
 
-    return { index, getSymbol, claimTile };
+    return { index, getSymbol, claimTile, claimed };
 
 }
 
@@ -62,33 +63,31 @@ function createGameBoard() {
 }
 
 function createTicTacToe(playerOne, playerTwo) {
-    let inPlay = true;
     let roundCounter = 0;
+    let inPlay = true;
 
     let board = createGameBoard();
 
     const playTurn = (tile) => {
-        if (inPlay) {
-            roundCounter++;
-            let currPlayer;
-            playerOne.getTurn() ? currPlayer = playerOne : currPlayer = playerTwo;
-            let symbol = currPlayer.getMove();
-            board.tiles[tile].claimTile(symbol);
-            displayBoard();
+        roundCounter++;
+        let currPlayer;
+        playerOne.getTurn() ? currPlayer = playerOne : currPlayer = playerTwo;
+        let symbol = currPlayer.getMove();
+        board.tiles[tile].claimTile(symbol);
+        displayBoard();
+        console.log(board.checkRound());
 
-            if (board.checkRound() || roundCounter == 9) {
-                if (roundCounter == 9) {
-                    console.log('Tie!')
-                } else {
-                    console.log(currPlayer.getName() + ' has won!');
-                }
+        if (board.checkRound() || roundCounter == 9) {
+            if (roundCounter == 9) {
                 inPlay = false;
+                return 'Tie!'
             } else {
-                playerOne.changeTurn();
-                playerTwo.changeTurn();
+                inPlay = false;
+                return (currPlayer.getName() + ' has won!');
             }
         } else {
-            console.log("The game is over, you need to start a new one");
+            playerOne.changeTurn();
+            playerTwo.changeTurn();
         }
     }
 
@@ -96,7 +95,7 @@ function createTicTacToe(playerOne, playerTwo) {
         board.displayBoard();
     }
 
-    const isInPlay = () => { return inPlay; }
+    const isInPlay = () => inPlay;
 
     return { board, playTurn, displayBoard, isInPlay };
 
@@ -104,6 +103,7 @@ function createTicTacToe(playerOne, playerTwo) {
 
 const DOMGame = (function() {
     let gameBoard;
+    let container = document.querySelector('.container');
     const newGameBtn = document.querySelector('.new-game');
     const newGameForm = document.querySelector('.game-form');
     const closeBtn = document.querySelector('.close');
@@ -113,17 +113,25 @@ const DOMGame = (function() {
     submitBtn.addEventListener('click', () => {
         newGameForm.close();
         event.preventDefault();
-        let playerOne = createPlayer(document.querySelector('#p1name').value, document.querySelector('#p1symbol').value, true);
-        let playerTwo = createPlayer(document.querySelector('#p2name').value, document.querySelector('#p2symbol').value, false);
+        let p1name = document.querySelector('#p1name').value || 'Player One';
+        let p1symbol = document.querySelector('#p1symbol').value || 'X';
+        let p2name = document.querySelector('#p2name').value || 'Player Two';
+        let p2symbol = document.querySelector('#p2symbol').value || 'O';
+
+        let playerOne = createPlayer(p1name, p1symbol, true);
+        let playerTwo = createPlayer(p2name, p2symbol, false);
         gameBoard = createTicTacToe(playerOne, playerTwo);
+        p1name.value = '';
+        p1symbol.value = '';
+        p2name.value = '';
+        p2symbol.value = '';
         displayBoard();
     });
 
 
     const displayBoard = () => {
-        let display = document.createElement('div');
-        let container = document.querySelector('.container');
-        display.className = 'board';
+        let display = document.querySelector('.board');
+        display.innerHTML = '';
 
         let tiles = gameBoard.board.tiles;
         for (let tile of tiles) {
@@ -131,13 +139,22 @@ const DOMGame = (function() {
             displayTile.className = 'tile'
             displayTile.textContent = '';
             displayTile.addEventListener('click', () => {
-                if (gameBoard.isInPlay()) {
-                    gameBoard.playTurn(tile.index);
+                if (gameBoard.isInPlay() && !tile.claimed()) {
+                    let result = gameBoard.playTurn(tile.index);
                     displayTile.textContent = tile.getSymbol();
+                    if (result != undefined) {
+                        displayResults(result);
+                    }
                 }
             });
             display.appendChild(displayTile);
         }
-        container.appendChild(display);
+    }
+
+    let results = document.querySelector('.results');
+    const displayResults = (result) => {
+        let newResult = document.createElement('h2');
+        newResult.textContent = result;
+        results.appendChild(newResult);
     }
 })();
