@@ -1,11 +1,11 @@
-function createPlayer(name, move, turn) {
+function createPlayer(name, symbol, turn) {
 
     const getName = () => name;
-    const getMove = () => move;
+    const getSymbol = () => symbol;
     const getTurn = () => turn;
     const changeTurn = () => turn = !turn;
 
-    return { getName, getMove, getTurn, changeTurn };
+    return { getName, getSymbol, getTurn, changeTurn };
 }
 
 function createTile(index) {
@@ -51,15 +51,9 @@ function createGameBoard() {
         (tiles[2].getSymbol() === tiles[4].getSymbol() && tiles[4].getSymbol() === tiles[6].getSymbol())
     );
 
-    const displayBoard = () => {
-        console.log(tiles[0].getSymbol() + ' | ' + tiles[1].getSymbol() + ' | ' + tiles[2].getSymbol());
-        console.log('--------');
-        console.log(tiles[3].getSymbol() + ' | ' + tiles[4].getSymbol() + ' | ' + tiles[5].getSymbol());
-        console.log('--------');
-        console.log(tiles[6].getSymbol() + ' | ' + tiles[7].getSymbol() + ' | ' + tiles[8].getSymbol());
-    }
 
-    return { tiles, checkRound, displayBoard }
+
+    return { tiles, checkRound }
 }
 
 function createTicTacToe(playerOne, playerTwo) {
@@ -72,18 +66,18 @@ function createTicTacToe(playerOne, playerTwo) {
         roundCounter++;
         let currPlayer;
         playerOne.getTurn() ? currPlayer = playerOne : currPlayer = playerTwo;
-        let symbol = currPlayer.getMove();
+        let symbol = currPlayer.getSymbol();
         board.tiles[tile].claimTile(symbol);
-        displayBoard();
-        console.log(board.checkRound());
 
-        if (board.checkRound() || roundCounter == 9) {
-            if (roundCounter == 9) {
-                inPlay = false;
-                return 'Tie!'
-            } else {
+        let won = board.checkRound();
+
+        if (won || roundCounter == 9) {
+            if (won) {
                 inPlay = false;
                 return (currPlayer.getName() + ' has won!');
+            } else {
+                inPlay = false;
+                return 'Tie!';
             }
         } else {
             playerOne.changeTurn();
@@ -91,18 +85,15 @@ function createTicTacToe(playerOne, playerTwo) {
         }
     }
 
-    const displayBoard = () => {
-        board.displayBoard();
-    }
 
     const isInPlay = () => inPlay;
 
-    return { board, playTurn, displayBoard, isInPlay };
+    return { board, playTurn, isInPlay };
 
 };
 
 const DOMGame = (function() {
-    let gameBoard;
+    let game;
     let container = document.querySelector('.container');
     const newGameBtn = document.querySelector('.new-game');
     const newGameForm = document.querySelector('.game-form');
@@ -110,46 +101,61 @@ const DOMGame = (function() {
     const submitBtn = document.querySelector('.submit');
     newGameBtn.addEventListener('click', () => { newGameForm.show(); });
     closeBtn.addEventListener('click', () => { newGameForm.close(); event.preventDefault(); });
-    submitBtn.addEventListener('click', () => {
-        newGameForm.close();
-        event.preventDefault();
-        let p1name = document.querySelector('#p1name').value || 'Player One';
-        let p1symbol = document.querySelector('#p1symbol').value || 'X';
-        let p2name = document.querySelector('#p2name').value || 'Player Two';
-        let p2symbol = document.querySelector('#p2symbol').value || 'O';
+    submitBtn.addEventListener('click', (eventA) => { submitBtnClick(event); });
 
-        let playerOne = createPlayer(p1name, p1symbol, true);
-        let playerTwo = createPlayer(p2name, p2symbol, false);
-        gameBoard = createTicTacToe(playerOne, playerTwo);
-        p1name.value = '';
-        p1symbol.value = '';
-        p2name.value = '';
-        p2symbol.value = '';
-        displayBoard();
-    });
+    const submitBtnClick = (event) => {
+        event.preventDefault();
+        let p1name = document.querySelector('#p1name');
+        let p1symbol = document.querySelector('#p1symbol')
+        let p2name = document.querySelector('#p2name');
+        let p2symbol = document.querySelector('#p2symbol');
+
+        let playerOne = createPlayer((p1name.value || 'Player One'), (p1symbol.value || 'X'), true);
+        let playerTwo = createPlayer((p2name.value || 'Player Two'), (p2symbol.value || 'O'), false);
+        if (playerOne.getSymbol() == playerTwo.getSymbol()) {
+            alert(playerOne.getName() + ' and ' + playerTwo.getName() + ' cannot have the same symbol.');
+        } else if (playerOne.getSymbol().length > 1 || playerTwo.getSymbol().length > 1) {
+            alert('Symbols cannot exceed 1 character in length.');
+        } else {
+            newGameForm.close();
+            game = createTicTacToe(playerOne, playerTwo);
+            p1name.value = '';
+            p1symbol.value = '';
+            p2name.value = '';
+            p2symbol.value = '';
+
+            displayBoard();
+        }
+    }
 
 
     const displayBoard = () => {
         let display = document.querySelector('.board');
         display.innerHTML = '';
 
-        let tiles = gameBoard.board.tiles;
+        let tiles = game.board.tiles;
         for (let tile of tiles) {
-            let displayTile = document.createElement('button');
-            displayTile.className = 'tile'
-            displayTile.textContent = '';
-            displayTile.addEventListener('click', () => {
-                if (gameBoard.isInPlay() && !tile.claimed()) {
-                    let result = gameBoard.playTurn(tile.index);
-                    displayTile.textContent = tile.getSymbol();
-                    if (result != undefined) {
-                        displayResults(result);
-                    }
-                }
-            });
+            let displayTile = createTileDOM(tile)
             display.appendChild(displayTile);
         }
     }
+
+    const createTileDOM = (tile) => {
+        let displayTile = document.createElement('button');
+        displayTile.className = 'tile'
+        displayTile.textContent = '';
+        displayTile.addEventListener('click', () => {
+            if (game.isInPlay() && !tile.claimed()) {
+                let result = game.playTurn(tile.index);
+                displayTile.textContent = tile.getSymbol();
+                if (result != undefined) {
+                    displayResults(result);
+                }
+            }
+        });
+        return displayTile;
+    }
+
 
     let results = document.querySelector('.results');
     const displayResults = (result) => {
@@ -157,4 +163,6 @@ const DOMGame = (function() {
         newResult.textContent = result;
         results.appendChild(newResult);
     }
+
+
 })();
